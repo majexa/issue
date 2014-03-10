@@ -236,5 +236,5 @@ class Issue extends GitBase {
 }
 
 Issue::$inDevProjectsFile = __DIR__.'/.projectDependingBranches.php';
-Issue::$remote = trim(file_get_contents(__DIR__.'/.remote'));
+//Issue::$remote = trim(file_get_contents(__DIR__.'/.remote'));
 FileVar::touch(Issue::$inDevProjectsFile);
