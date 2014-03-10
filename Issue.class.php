@@ -207,7 +207,8 @@ class Issue extends GitBase {
       chdir($f);
       print `git add .`;
       print `git commit`;
-      print `git push $remote i-$id`;
+      sys("git push $remote i-$id", true);
+      //print `git push $remote i-$id`;
     }
   }
 
@@ -236,5 +237,5 @@ class Issue extends GitBase {
 }
 
 Issue::$inDevProjectsFile = __DIR__.'/.projectDependingBranches.php';
-//Issue::$remote = trim(file_get_contents(__DIR__.'/.remote'));
+Issue::$remote = file_exists(__DIR__.'/.remote') ? trim(file_get_contents(__DIR__.'/.remote')) : 'origin';
 FileVar::touch(Issue::$inDevProjectsFile);
