@@ -161,7 +161,6 @@ class Issue extends GitBase {
   }
 
   function opened() {
-    //print "server '".gethostname()."':\n";
     $r = $this->getIssueBranches();
     if (!$r) {
       print "No opened issues\n";
