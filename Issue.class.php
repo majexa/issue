@@ -2,10 +2,6 @@
 
 class Issue extends GitBase {
 
-  function projects() {
-    foreach ($this->findGitFolders() as $f) print '* '.basename($f)."\n";
-  }
-
   static $inDevProjectsFile;
 
   protected $projectGitFolders;
@@ -33,7 +29,11 @@ class Issue extends GitBase {
     });
   }
 
+  /**
+   * Создаёт новую ветку для работы над задачей
+   */
   function create($id, $project, $dependingProjects = '', $masterBranch = 'master', $dependingProjectsMasterBranch = 'master') {
+    $this->cleanupInDev();
     $dependingProjects = Misc::quoted2arr($dependingProjects);
     $projects = array_merge([$project], $dependingProjects);
     $notCleanProjects = $this->notCleanProjects($projects);
@@ -58,7 +58,23 @@ class Issue extends GitBase {
     ]);
   }
 
+  /**
+   * Создаёт новую ветку для работы над задачей для всех проектов, которые были изменены
+   */
+  function refactor($id) {
+    foreach ($this->findGitFolders() as $folder) {
+      $git = new GitFolder($folder);
+      if (!$git->isClean()) {
+        //$git->
+      }
+    }
+  }
+
+  /**
+   * Переключает указанный проект на ветку с задачей
+   */
   function add($id, $dependingProject, $masterBranch = 'master') {
+    $this->cleanupInDev();
     $isClean = !(new GitFolder($this->getGitProjectFolder($dependingProject)))->isClean();
     $issueFolder = new IssueGitFolder($this->getGitProjectFolder($dependingProject));
     if ($isClean) {
@@ -100,11 +116,19 @@ class Issue extends GitBase {
     foreach ($this->findGitFolders() as $f) $this->projectGitFolders[basename($f)] = $f;
   }
 
+  /**
+   * Мёрджит изменения в мастер-ветку и удаляет ветку с задачей
+   */
   function complete($id) {
+    $this->cleanupInDev();
     $this->close($id, 'complete');
   }
 
+  /**
+   * Удаляет ветку с задачей
+   */
   function delete($id) {
+    $this->cleanupInDev();
     $this->close($id, 'delete');
   }
 
@@ -131,7 +155,12 @@ class Issue extends GitBase {
   }
 
   static function projectBranch($project, array $issue) {
-    return $project == $issue['project'] ? $issue['masterBranch'] : $issue['dependingProjectsMasterBranch'];
+    if ($project == $issue['project']) {
+      return $issue['masterBranch'];
+    } else {
+      if (empty($issue['dependingProjectsMasterBranch'])) throw new EmptyException('dependingProjectsMasterBranch');
+      return $issue['dependingProjectsMasterBranch'];
+    }
   }
 
   /*
@@ -160,6 +189,9 @@ class Issue extends GitBase {
     return $r;
   }
 
+  /**
+   * Отображает все открытые задачи
+   */
   function opened() {
     $r = $this->getIssueBranches();
     if (!$r) {
@@ -176,6 +208,9 @@ class Issue extends GitBase {
     }
   }
 
+  /**
+   * Показывает статус задачи
+   */
   function status($id) {
     $issueBranches = $this->getIssueBranches(self::returnFolder);
     $remote = self::$remote;
@@ -195,6 +230,9 @@ class Issue extends GitBase {
     return $clean;
   }
 
+  /**
+   * Обновляет ветку с задачей из ремоута
+   */
   function update($id) {
     $issueBranches = $this->getIssueBranches(self::returnFolder);
     if (!isset($issueBranches[$id])) {
@@ -208,6 +246,76 @@ class Issue extends GitBase {
       print `git commit`;
       sys("git push $remote i-$id", true);
       //print `git push $remote i-$id`;
+    }
+  }
+
+  /**
+   * Синхронизирует файл с данными об открытых ветках с реалиями
+   */
+  function cleanupInDev() {
+    foreach ($this->getIssueBranches() as $id => $projects) {
+      foreach ($projects as $project) {
+        FileVar::updateSubVar(self::$inDevProjectsFile, $id, [
+          'project'                       => $project,
+          'masterBranch'                  => 'master',
+          'dependingProjectsMasterBranch' => null
+        ]);
+      }
+    }
+  }
+
+  /**
+   * Отображает все гит-проекты
+   */
+  function projects() {
+    foreach ($this->findGitFolders() as $f) print '* '.basename($f)."\n";
+  }
+
+  /**
+   * Отображает активные ветки всех гит-проектов
+   */
+  function branches() {
+    foreach ($this->findGitFolders() as $folder) {
+      print '* '.str_pad(basename($folder), 20).(new GitFolder($folder))->wdBranch()."\n";
+    }
+  }
+
+  /**
+   * Показывает гит-проекты, нуждающиеся в пуше или пуле
+   */
+  function changed() {
+    $this->_changed();
+  }
+
+  protected function _changed($filter = []) {
+    foreach ($this->findGitFolders($filter) as $folder) {
+      $git = new GitFolder($folder);
+      if (!$git->isClean()) {
+        print '* '.str_pad(basename($folder), 20).$git->wdBranch()."\n";
+      }
+    }
+  }
+
+  protected function getChangedFolders($filter = []) {
+    $r = [];
+    foreach ($this->findGitFolders($filter) as $folder) {
+      $git = new GitFolder($folder);
+      if (!$git->isClean()) {
+        $r[] = $folder;
+      }
+    }
+    return $r;
+  }
+
+  /**
+   * Синхронизирует изменения с ремоутом
+   */
+  function push($projectsFilter = []) {
+    print "You trying to push this projects to all theirs remotes:\n";
+    $this->_changed($projectsFilter);
+    if (!Cli::confirm('Are you shure?')) return;
+    foreach ($this->getChangedFolders($projectsFilter) as $folder) {
+      (new GitFolder($folder))->push();
     }
   }
 
