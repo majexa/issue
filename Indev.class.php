@@ -45,6 +45,9 @@ class Indev extends GitBase {
     return $r;
   }
 
+  //function pushing($projectsFilter = []) {
+  //}
+
   /**
    * Синхронизирует изменения с ремоутом
    */
@@ -52,7 +55,7 @@ class Indev extends GitBase {
     print "You trying to push this projects to all theirs remotes:\n";
     $this->_changed($projectsFilter);
     if (!Cli::confirm('Are you shure?')) return;
-    foreach ($this->getChangedFolders($projectsFilter) as $folder) {
+    foreach ($this->getChangedFolders($projectsFilter) as $folder) { // !
       (new GitFolder($folder))->push();
     }
   }
