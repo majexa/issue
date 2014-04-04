@@ -1,0 +1,1 @@
+php ../run/run.php "new IssueCli('$*', new Indev)" issue/init.php
