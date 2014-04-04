@@ -1,1 +1,1 @@
-php ~/ngn-env/run/run.php "new IssueCli('$*', new Issue)" NGN_ENV_PATH/issue/init.php
+php ~/ngn-env/run/run.php "new IssueCli('$*', new Issue)" issue/init.php
