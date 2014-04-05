@@ -21,11 +21,11 @@ class Indev extends GitBase {
   /**
    * Показывает гит-проекты, нуждающиеся в пуше или пуле
    */
-  function changed() {
-    $this->_changed();
+  function tocommit() {
+    $this->notClean();
   }
 
-  protected function _changed($filter = []) {
+  protected function notClean($filter = []) {
     foreach ($this->findGitFolders($filter) as $folder) {
       $git = new GitFolder($folder);
       if (!$git->isClean()) {
@@ -37,23 +37,28 @@ class Indev extends GitBase {
   protected function getChangedFolders($filter = []) {
     $r = [];
     foreach ($this->findGitFolders($filter) as $folder) {
-      $git = new GitFolder($folder);
-      if (!$git->isClean()) {
-        $r[] = $folder;
-      }
+      if ((new GitFolder($folder))->hasChanges()) $r[] = $folder;
     }
     return $r;
   }
 
-  //function pushing($projectsFilter = []) {
-  //}
+  function topush() {
+    foreach ($this->findGitFolders() as $folder) {
+      $git = new GitFolder($folder);
+      if ($git->hasChanges()) {
+        $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
+        if (!$remotes) $remotes = 'origin (new)';
+        print '* '.str_pad(basename($folder), 20).str_pad($git->wdBranch(), 10).'> '.$remotes."\n";
+      }
+    }
+  }
 
   /**
    * Синхронизирует изменения с ремоутом
    */
   function push($projectsFilter = []) {
     print "You trying to push this projects to all theirs remotes:\n";
-    $this->_changed($projectsFilter);
+    $this->topush($projectsFilter);
     if (!Cli::confirm('Are you shure?')) return;
     foreach ($this->getChangedFolders($projectsFilter) as $folder) { // !
       (new GitFolder($folder))->push();
