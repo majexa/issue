@@ -21,29 +21,35 @@ class Indev extends GitBase {
   /**
    * Показывает гит-проекты, нуждающиеся в пуше или пуле
    */
-  function tocommit() {
-    $this->notClean();
+  function commit($projectsFilter = []) {
+    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFolders', 'You trying to commit these projects');
   }
 
-  protected function notClean($filter = []) {
-    foreach ($this->findGitFolders($filter) as $folder) {
-      $git = new GitFolder($folder);
-      if (!$git->isClean()) {
-        print '* '.str_pad(basename($folder), 20).$git->wdBranch()."\n";
-      }
+  /**
+   * Синхронизирует изменения с ремоутом
+   */
+  function push($projectsFilter = []) {
+    $this->abstractConfirmAction($projectsFilter, 'push', 'getChangedFolders', 'You trying to push these projects to all theirs remotes');
+  }
+
+  protected function abstractConfirmAction($projectsFilter, $actionMethod, $getFoldersMethod, $confirmCaption) {
+    $folders = $this->$getFoldersMethod($projectsFilter);
+    if (!$folders) {
+      print "No projects to $actionMethod\n";
+      return;
+    }
+    print "$confirmCaption:\n";
+    $projectsListAction = 'to'.ucfirst($actionMethod);
+    $this->$projectsListAction($projectsFilter);
+    if (!Cli::confirm('Are you shure?')) return;
+    foreach ($folders as $folder) { // !
+      (new GitFolder($folder))->$actionMethod();
     }
   }
 
-  protected function getChangedFolders($filter = []) {
-    $r = [];
-    foreach ($this->findGitFolders($filter) as $folder) {
-      if ((new GitFolder($folder))->hasChanges()) $r[] = $folder;
-    }
-    return $r;
-  }
-
-  function topush() {
+  protected function toPush() {
     foreach ($this->findGitFolders() as $folder) {
+      if (!Misc::hasSuffix('/dnss', $folder)) continue;
       $git = new GitFolder($folder);
       if ($git->hasChanges()) {
         $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
@@ -53,16 +59,25 @@ class Indev extends GitBase {
     }
   }
 
-  /**
-   * Синхронизирует изменения с ремоутом
-   */
-  function push($projectsFilter = []) {
-    print "You trying to push this projects to all theirs remotes:\n";
-    $this->topush($projectsFilter);
-    if (!Cli::confirm('Are you shure?')) return;
-    foreach ($this->getChangedFolders($projectsFilter) as $folder) { // !
-      (new GitFolder($folder))->push();
+  protected function toCommit($filter = []) {
+    foreach ($this->findGitFolders($filter) as $folder) {
+      $git = new GitFolder($folder);
+      if (!$git->isClean()) {
+        print '* '.str_pad(basename($folder), 20).$git->wdBranch()."\n";
+      }
     }
+  }
+
+  protected function getNotCleanFolders($filter = []) {
+    return array_filter($this->findGitFolders($filter), function($folder) {
+      return !(new GitFolder($folder))->isClean();
+    });
+  }
+
+  protected function getChangedFolders($filter = []) {
+    return array_filter($this->findGitFolders($filter), function($folder) {
+      return (new GitFolder($folder))->hasChanges();
+    });
   }
 
 }
