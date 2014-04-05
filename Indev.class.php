@@ -48,7 +48,7 @@ class Indev extends GitBase {
   }
 
   protected function pushInfo() {
-    foreach ($this->findGitFolders() as $folder) {
+    foreach ($this->findGitFolders() as $folder) { 
       $git = new GitFolder($folder);
       if ($git->hasChanges()) {
         $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
