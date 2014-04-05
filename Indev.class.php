@@ -39,7 +39,7 @@ class Indev extends GitBase {
       return;
     }
     print "$confirmCaption:\n";
-    $projectsListAction = 'to'.ucfirst($actionMethod);
+    $projectsListAction = $actionMethod.'Info';
     $this->$projectsListAction($projectsFilter);
     if (!Cli::confirm('Are you shure?')) return;
     foreach ($folders as $folder) { // !
@@ -47,9 +47,8 @@ class Indev extends GitBase {
     }
   }
 
-  protected function toPush() {
+  protected function pushInfo() {
     foreach ($this->findGitFolders() as $folder) {
-      if (!Misc::hasSuffix('/dnss', $folder)) continue;
       $git = new GitFolder($folder);
       if ($git->hasChanges()) {
         $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
@@ -59,7 +58,7 @@ class Indev extends GitBase {
     }
   }
 
-  protected function toCommit($filter = []) {
+  protected function commitInfo($filter = []) {
     foreach ($this->findGitFolders($filter) as $folder) {
       $git = new GitFolder($folder);
       if (!$git->isClean()) {
