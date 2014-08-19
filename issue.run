@@ -1,2 +1,3 @@
+#!/bin/sh
 # ngn
 php ~/ngn-env/run/run.php "new IssueCli('$*', new Issue)" issue/init.php
