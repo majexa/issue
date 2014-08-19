@@ -30,6 +30,25 @@ class Issue extends GitBase {
   }
 
   /**
+   * Отображает все открытые задачи
+   */
+  function lst() {
+    $r = $this->getIssueBranches();
+    if (!$r) {
+      print "No opened issues\n";
+      return;
+    }
+    foreach ($r as $issueId => $projects) {
+      if (!($issue = $this->getIssue($issueId, false))) {
+        output("No issue data for ID '$issueId'. Need to cleanup");
+        return;
+      }
+      // $this->getGitProjectFolder($issue['project']);
+      print "$issueId: ".implode(', ', $projects)."\n";
+    }
+  }
+
+  /**
    * Создаёт новую ветку для работы над задачей
    */
   function create($id, $project, $dependingProjects = '', $masterBranch = 'master', $dependingProjectsMasterBranch = 'master') {
@@ -187,25 +206,6 @@ class Issue extends GitBase {
       }
     }
     return $r;
-  }
-
-  /**
-   * Отображает все открытые задачи
-   */
-  function opened() {
-    $r = $this->getIssueBranches();
-    if (!$r) {
-      print "No opened issues\n";
-      return;
-    }
-    foreach ($r as $issueId => $projects) {
-      if (!($issue = $this->getIssue($issueId, false))) {
-        output("No issue data for ID '$issueId'. Need to cleanup");
-        return;
-      }
-      // $this->getGitProjectFolder($issue['project']);
-      print "$issueId: ".implode(', ', $projects)."\n";
-    }
   }
 
   /**
