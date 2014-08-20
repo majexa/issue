@@ -1,6 +1,12 @@
 <?php
 
-return [[
+return [
+  [
     'title' => 'casper select option method',
-    'id' => 1
-  ]];
+    'id' => 2
+  ],
+  [
+    'title' => 'sitemap page module',
+    'id' => 3
+  ]
+];

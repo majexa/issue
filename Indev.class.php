@@ -19,10 +19,10 @@ class Indev extends GitBase {
   }
 
   /**
-   * Показывает гит-проекты, нуждающиеся в пуше или пуле
+   * Комитит проекты, нуждающиеся в пуше или пуле и не являющиеся issue
    */
   function commit($projectsFilter = []) {
-    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFolders', 'You trying to commit these projects');
+    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFoldersExceptingIssues', 'You trying to commit these projects');
   }
 
   /**
@@ -39,32 +39,32 @@ class Indev extends GitBase {
       return;
     }
     print "$confirmCaption:\n";
-    $projectsListAction = $actionMethod.'Info';
-    $this->$projectsListAction($projectsFilter);
-    if (!Cli::confirm('Are you shure?')) return;
-    foreach ($folders as $folder) { // !
-      (new GitFolder($folder))->$actionMethod();
+    $projectsInfoAction = $actionMethod.'Info';
+    $this->$projectsInfoAction($folders);
+    if (!Cli::confirm('Are you sure?')) return;
+    foreach ($folders as $folder) (new GitFolder($folder))->$actionMethod();
+  }
+
+  protected function pushInfo(array $folders) {
+    foreach ($folders as $folder) {
+      $git = new GitFolder($folder);
+      $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
+      if (!$remotes) $remotes = 'origin (new)';
+      print '* '.str_pad(basename($folder), 20).str_pad($git->wdBranch(), 10).'> '.$remotes."\n";
     }
   }
 
-  protected function pushInfo() {
-    foreach ($this->findGitFolders() as $folder) { 
+  protected function commitInfo(array $folders) {
+    foreach ($folders as $folder) {
       $git = new GitFolder($folder);
-      if ($git->hasChanges()) {
-        $remotes = implode(', ', $git->getRemotes($git->wdBranch()));
-        if (!$remotes) $remotes = 'origin (new)';
-        print '* '.str_pad(basename($folder), 20).str_pad($git->wdBranch(), 10).'> '.$remotes."\n";
-      }
+      print '* '.str_pad(basename($folder), 20).$git->wdBranch()."\n";
     }
   }
 
-  protected function commitInfo($filter = []) {
-    foreach ($this->findGitFolders($filter) as $folder) {
-      $git = new GitFolder($folder);
-      if (!$git->isClean()) {
-        print '* '.str_pad(basename($folder), 20).$git->wdBranch()."\n";
-      }
-    }
+  protected function getNotCleanFoldersExceptingIssues($filter = []) {
+    return array_filter($this->getNotCleanFolders($filter), function($folder) {
+      return !Misc::hasPrefix('i-', (new GitFolder($folder))->wdBranch());
+    });
   }
 
   protected function getNotCleanFolders($filter = []) {

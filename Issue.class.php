@@ -36,18 +36,18 @@ class Issue extends GitBase {
   /**
    * Отображает все открытые задачи
    */
-  function lst() {
+  function opened() {
     $r = $this->getIssueBranches();
     if (!$r) {
       print "No opened issues\n";
       return;
     }
-    foreach ($r as $issueId => $projects) {
-      if (!($issue = $this->getIssue($issueId, false))) {
-        output("No issue data for ID '$issueId'. Need to cleanup");
+    foreach ($r as $id => $projects) {
+      if (!($issue = $this->getIssue($id, false))) {
+        output("No issue data for ID '$id'. Need to cleanup");
         return;
       }
-      print "$issueId: ".implode(', ', $projects)."\n";
+      print "$id: ".implode(', ', $projects)." -- ".$this->projects()->getItem($id)['title']."\n";
     }
   }
 
@@ -58,12 +58,14 @@ class Issue extends GitBase {
     $title = str_replace('_', ' ', $title);
     $projects = $this->projects();
     $id = $projects->create(['title' => $title]);
+    //die2($id);
     try {
       $this->_create($id, $project, $depProjects, $masterBranch, $depProjectsMasterBranch);
     } catch (Exception $e) {
       $projects->delete($id);
       throw $e;
     }
+    // проверяем. если ветки нет, удаляем запись
   }
 
   protected function _create($id, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
@@ -108,6 +110,7 @@ class Issue extends GitBase {
    * Переключает указанный проект на ветку с задачей
    */
   function add($id, $depProject, $masterBranch = 'master') {
+    Misc::checkNumeric($id);
     $this->cleanupInDev();
     $isClean = !(new GitFolder($this->getGitProjectFolder($depProject)))->isClean();
     $issueFolder = new IssueGitFolder($this->getGitProjectFolder($depProject));
