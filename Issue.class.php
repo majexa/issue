@@ -50,7 +50,10 @@ class Issue extends GitBase {
       $projects->delete($id);
       throw $e;
     }
-    // @todo проверяем. если ветки нет, удаляем запись
+    $localBranches = (new GitFolder($this->getGitProjectFolder($project)))->localBranches();
+    if (!in_array("i-$id", $localBranches)) {
+      $projects->delete($id);
+    }
   }
 
   protected function _create($id, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
@@ -80,18 +83,6 @@ class Issue extends GitBase {
   }
 
   /**
-   * Создаёт новую ветку для работы над задачей для всех проектов, которые были изменены
-   */
-  function refactor($id) {
-    foreach ($this->findGitFolders() as $folder) {
-      $git = new GitFolder($folder);
-      if (!$git->isClean()) {
-        //$git->
-      }
-    }
-  }
-
-  /**
    * Переключает указанный проект на ветку с задачей
    */
   function add($id, $depProject, $masterBranch = 'master') {
@@ -111,17 +102,6 @@ class Issue extends GitBase {
     chdir($this->projectGitFolders[$project]);
     print `git checkout -b i-$id`;
   }
-
-  /*
-  function pull($id) {
-    $this->getDependingProjects($id);
-    return;
-    foreach ($this->getDependingProjects($id) as $project) {
-      chdir($this->projectGitFolders[$project]);
-      `git pull origin {$inDevProject['dependingProjectsMasterBranch']}`;
-    }
-  }
-  */
 
   protected function getDependingProjects($id) {
     $issueBranches = $this->getIssueBranches();
