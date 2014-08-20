@@ -6,17 +6,6 @@ class Issue extends GitBase {
 
   protected $projectGitFolders;
 
-  /*
-  protected function checkIsClean($project) {
-    if (!(new GitFolder($this->getGitProjectFolder($project)))->isClean()) {
-      if (Cli::confirm("U have changes in current branch. Would U switch that changes to 'i-$id' branch?")) {
-        return true;
-      }
-    }
-    return false;
-  }
-  */
-
   protected function getGitProjectFolder($project) {
     $this->initProjectGitFolders();
     if (!isset($this->projectGitFolders[$project])) throw new EmptyException("Project '$project' does not exist");
@@ -194,17 +183,6 @@ class Issue extends GitBase {
     }
   }
 
-  /*
-  protected function release() {
-    if (`ci test`) {
-      `git checkout master`;
-      `git merge i-123`;
-      `git push origin master`;
-      'prod ci update';
-    }
-  }
-  */
-
   const returnFolder = 1, returnProject = 2;
 
   protected function getIssueBranches($return = self::returnProject) {
@@ -257,7 +235,6 @@ class Issue extends GitBase {
       print `git add .`;
       print `git commit`;
       sys("git push $remote i-$id", true);
-      //print `git push $remote i-$id`;
     }
   }
 
@@ -276,27 +253,7 @@ class Issue extends GitBase {
     }
   }
 
-  // --
-
   static $remote;
-
-  //}
-
-  /*
-  function test($id) {
-    $issueBranches = $this->getIssueBranches(self::returnFolder);
-    if (!isset($issueBranches[$id])) {
-      output("No issue branches by ID $id");
-      return;
-    }
-    foreach ($issueBranches[$id] as $f) {
-      (new IssueGitFolder($f))->push($id);
-    }
-    $host = self::$remoteTestServer[0]['host'];
-    $port = self::$remoteTestServer[0]['port'];
-    print `ssh user@$host -p $port ci update`;
-  }
-  */
 
 }
 
