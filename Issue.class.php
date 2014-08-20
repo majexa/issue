@@ -48,6 +48,7 @@ class Issue extends GitBase {
         return;
       }
       print "$id: ".implode(', ', $projects)." -- ".$this->projects()->getItem($id)['title']."\n";
+//
     }
   }
 
