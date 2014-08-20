@@ -75,7 +75,6 @@ class Indev extends GitBase {
 
   protected function getChangedFolders($filter = []) {
     return array_filter($this->findGitFolders($filter), function($folder) {
-      if (strstr($folder, 'issue')) die2((new GitFolder($folder))->hasChanges());
       return (new GitFolder($folder))->hasChanges();
     });
   }
