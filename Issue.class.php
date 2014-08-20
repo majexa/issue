@@ -17,10 +17,6 @@ class Issue extends GitBase {
   }
   */
 
-  protected function projects() {
-    return new FileItems(__DIR__.'/data/projects.php');
-  }
-
   protected function getGitProjectFolder($project) {
     $this->initProjectGitFolders();
     if (!isset($this->projectGitFolders[$project])) throw new EmptyException("Project '$project' does not exist");
@@ -47,7 +43,7 @@ class Issue extends GitBase {
         output("No issue data for ID '$id'. Need to cleanup");
         return;
       }
-      print "$id: ".implode(', ', $projects)." -- ".$this->projects()->getItem($id)['title']."\n";
+      print "$id: ".implode(', ', $projects)." -- ".(new IssueRecords)->getItem($id)['title']."\n";
 //
     }
   }
@@ -57,16 +53,15 @@ class Issue extends GitBase {
    */
   function create($title, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
     $title = str_replace('_', ' ', $title);
-    $projects = $this->projects();
+    $projects = new IssueRecords;
     $id = $projects->create(['title' => $title]);
-    //die2($id);
     try {
       $this->_create($id, $project, $depProjects, $masterBranch, $depProjectsMasterBranch);
     } catch (Exception $e) {
       $projects->delete($id);
       throw $e;
     }
-    // проверяем. если ветки нет, удаляем запись
+    // @todo проверяем. если ветки нет, удаляем запись
   }
 
   protected function _create($id, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
@@ -165,7 +160,7 @@ class Issue extends GitBase {
   function delete($id) {
     $this->cleanupInDev();
     $this->close($id, 'delete');
-    $this->projects()->delete($id);
+    (new IssueRecords)->delete($id);
   }
 
   protected function close($id, $method) {
@@ -184,7 +179,7 @@ class Issue extends GitBase {
   static function getIssue($id, $strict = true) {
     $r = FileVar::getVar(self::$inDevProjectsFile);
     if (!isset($r[$id])) {
-      if ($strict) throw new EmptyException("No issue with ID '$id'");
+      if ($strict) throw new EmptyException("There is no opened issue with ID '$id'");
       else return false;
     }
     return $r[$id];

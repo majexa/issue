@@ -28,6 +28,7 @@ class IssueGitFolder extends GitFolder {
   }
 
   function complete($id, $masterBranch) {
+    $this->shellexec('git commit -am "'.(new IssueRecords)->getItem($id)['title'].'"', true);
     $this->shellexec("git checkout $masterBranch", true);
     $this->shellexec("git merge i-$id", true);
     $this->shellexec("git branch -d i-$id", true);
