@@ -17,6 +17,10 @@ class Issue extends GitBase {
   }
   */
 
+  protected function projects() {
+    return new FileItems(__DIR__.'/data/projects.php');
+  }
+
   protected function getGitProjectFolder($project) {
     $this->initProjectGitFolders();
     if (!isset($this->projectGitFolders[$project])) throw new EmptyException("Project '$project' does not exist");
@@ -43,7 +47,6 @@ class Issue extends GitBase {
         output("No issue data for ID '$issueId'. Need to cleanup");
         return;
       }
-      // $this->getGitProjectFolder($issue['project']);
       print "$issueId: ".implode(', ', $projects)."\n";
     }
   }
@@ -51,17 +54,29 @@ class Issue extends GitBase {
   /**
    * Создаёт новую ветку для работы над задачей
    */
-  function create($id, $project, $dependingProjects = '', $masterBranch = 'master', $dependingProjectsMasterBranch = 'master') {
+  function create($title, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
+    $title = str_replace('_', ' ', $title);
+    $projects = $this->projects();
+    $id = $projects->create(['title' => $title]);
+    try {
+      $this->_create($id, $project, $depProjects, $masterBranch, $depProjectsMasterBranch);
+    } catch (Exception $e) {
+      $projects->delete($id);
+      throw $e;
+    }
+  }
+
+  protected function _create($id, $project, $depProjects = '', $masterBranch = 'master', $depProjectsMasterBranch = 'master') {
     $this->cleanupInDev();
-    $dependingProjects = Misc::quoted2arr($dependingProjects);
-    $projects = array_merge([$project], $dependingProjects);
+    $depProjects = Misc::quoted2arr($depProjects);
+    $projects = array_merge([$project], $depProjects);
     $notCleanProjects = $this->notCleanProjects($projects);
     $issueBranches = $this->getIssueBranches();
     if (isset($issueBranches[$id])) throw new Exception("Issue $id already started in projects: ".implode(', ', $issueBranches[$id]));
     if ($notCleanProjects and !Cli::confirm("Would U like to checkout dirty project changes to new 'i-$id' branch?\nDirty projects: ".implode(', ', $notCleanProjects))) return;
     foreach ($projects as $p) {
       $issueFolder = new IssueGitFolder($this->getGitProjectFolder($p));
-      $masterBranch = $p == $project ? 'master' : $dependingProjectsMasterBranch;
+      $masterBranch = $p == $project ? 'master' : $depProjectsMasterBranch;
       if (in_array($p, $notCleanProjects)) {
         $issueFolder->createNotClean($id, $masterBranch);
       }
@@ -73,7 +88,7 @@ class Issue extends GitBase {
     FileVar::updateSubVar(self::$inDevProjectsFile, $id, [
       'project'                       => $project,
       'masterBranch'                  => $masterBranch,
-      'dependingProjectsMasterBranch' => $dependingProjectsMasterBranch
+      'dependingProjectsMasterBranch' => $depProjectsMasterBranch
     ]);
   }
 
@@ -92,10 +107,10 @@ class Issue extends GitBase {
   /**
    * Переключает указанный проект на ветку с задачей
    */
-  function add($id, $dependingProject, $masterBranch = 'master') {
+  function add($id, $depProject, $masterBranch = 'master') {
     $this->cleanupInDev();
-    $isClean = !(new GitFolder($this->getGitProjectFolder($dependingProject)))->isClean();
-    $issueFolder = new IssueGitFolder($this->getGitProjectFolder($dependingProject));
+    $isClean = !(new GitFolder($this->getGitProjectFolder($depProject)))->isClean();
+    $issueFolder = new IssueGitFolder($this->getGitProjectFolder($depProject));
     if ($isClean) {
       $issueFolder->create($id, $masterBranch);
     } else {
@@ -126,9 +141,6 @@ class Issue extends GitBase {
     return Arr::drop($issueBranches[$id], self::getIssue($id)['project']);
   }
 
-  //protected function test($id) {
-  //}
-
   protected function initProjectGitFolders() {
     if (isset($this->projectGitFolders)) return;
     $this->projectGitFolders = [];
@@ -149,6 +161,7 @@ class Issue extends GitBase {
   function delete($id) {
     $this->cleanupInDev();
     $this->close($id, 'delete');
+    $this->projects()->delete($id);
   }
 
   protected function close($id, $method) {
