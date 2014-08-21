@@ -155,6 +155,7 @@ class Issue extends GitBase {
   }
 
   static function projectBranch($project, array $issue) {
+    return $issue['masterBranch'];
     if ($project == $issue['project']) {
       return $issue['masterBranch'];
     } else {
