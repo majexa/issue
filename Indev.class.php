@@ -18,6 +18,11 @@ class Indev extends GitBase {
     }
   }
 
+  function done() {
+    $this->commit();
+    $this->push();
+  }
+
   /**
    * Комитит проекты, нуждающиеся в пуше или пуле и не являющиеся issue
    */
