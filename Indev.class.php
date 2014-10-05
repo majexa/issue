@@ -18,35 +18,37 @@ class Indev extends GitBase {
     }
   }
 
-  function done() {
-    $this->commit();
-    $this->push();
+  function done($force = false) {
+    $this->commit([], $force);
+    $this->push([], $force);
   }
 
   /**
    * Комитит проекты, нуждающиеся в пуше или пуле и не являющиеся issue
    */
-  function commit($projectsFilter = []) {
-    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFoldersExceptingIssues', 'You trying to commit these projects');
+  function commit($projectsFilter = [], $force = false) {
+    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFoldersExceptingIssues', 'You trying to commit these projects', $force);
   }
 
   /**
    * Синхронизирует изменения с ремоутом
    */
-  function push($projectsFilter = []) {
-    $this->abstractConfirmAction($projectsFilter, 'push', 'getChangedFolders', 'You trying to push these projects to all theirs remotes');
+  function push($projectsFilter = [], $force = false) {
+    $this->abstractConfirmAction($projectsFilter, 'push', 'getChangedFolders', 'You trying to push these projects to all theirs remotes', $force);
   }
 
-  protected function abstractConfirmAction($projectsFilter, $actionMethod, $getFoldersMethod, $confirmCaption) {
+  protected function abstractConfirmAction($projectsFilter, $actionMethod, $getFoldersMethod, $confirmCaption, $force = false) {
     $folders = $this->$getFoldersMethod($projectsFilter);
     if (!$folders) {
       print "No projects to $actionMethod\n";
       return;
     }
-    print "$confirmCaption:\n";
-    $projectsInfoAction = $actionMethod.'Info';
-    $this->$projectsInfoAction($folders);
-    if (!Cli::confirm('Are you sure?')) return;
+    if (!$force) {
+      print "$confirmCaption:\n";
+      $projectsInfoAction = $actionMethod.'Info';
+      $this->$projectsInfoAction($folders);
+      if (!Cli::confirm('Are you sure?')) return;
+    }
     foreach ($folders as $folder) (new GitFolder($folder))->$actionMethod();
   }
 
