@@ -1,1 +1,1 @@
-php ../run/run.php "new CliHelpArgsSingle('$*', new Indev)" issue/init.php
+php ../run/run.php "new CliAccessArgsSingle('$*', new Indev)" issue/init.php
