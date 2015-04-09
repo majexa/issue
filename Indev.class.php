@@ -21,6 +21,8 @@ class Indev extends GitBase {
   function done($force = false) {
     $this->commit([], $force);
     $this->push([], $force);
+    $this->deploy();
+
   }
 
   /**
@@ -35,6 +37,11 @@ class Indev extends GitBase {
    */
   function push($projectsFilter = [], $force = false) {
     $this->abstractConfirmAction($projectsFilter, 'push', 'getChangedFolders', 'You trying to push these projects to all theirs remotes', $force);
+  }
+
+  function deploy() {
+    require $config =  __DIR__.'/config.php';
+    shell_exec($config['deploy']);
   }
 
   protected function abstractConfirmAction($projectsFilter, $actionMethod, $getFoldersMethod, $confirmCaption, $force = false) {
