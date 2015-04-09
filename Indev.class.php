@@ -40,8 +40,8 @@ class Indev extends GitBase {
   }
 
   function deploy() {
-    require $config =  __DIR__.'/config.php';
-    shell_exec($config['deploy']);
+    $config =  require __DIR__.'/config.php';
+    print shell_exec($config['deploy']);
   }
 
   protected function abstractConfirmAction($projectsFilter, $actionMethod, $getFoldersMethod, $confirmCaption, $force = false) {
