@@ -22,7 +22,6 @@ class Indev extends GitBase {
     $this->commit([], $force);
     $this->push([], $force);
     $this->deploy();
-
   }
 
   /**
