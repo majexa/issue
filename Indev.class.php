@@ -25,11 +25,19 @@ class Indev extends GitBase {
   }
 
   /**
-   * Комитит проекты, нуждающиеся в пуше или пуле и не являющиеся issue
+   * Комитит проекты, нуждающиеся в пуше или пуле
    */
   function commit($projectsFilter = [], $force = false) {
+    $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFolders', 'You trying to commit these projects', $force);
+  }
+
+  /**
+   * Комитит проекты, нуждающиеся в пуше или пуле и не являющиеся issue
+   */
+  function commitNonIssue($projectsFilter = [], $force = false) {
     $this->abstractConfirmAction($projectsFilter, 'commit', 'getNotCleanFoldersExceptingIssues', 'You trying to commit these projects', $force);
   }
+
 
   /**
    * Синхронизирует изменения с ремоутом

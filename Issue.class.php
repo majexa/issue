@@ -97,6 +97,37 @@ class Issue extends GitBase {
     }
   }
 
+  /**
+   * Выкачивает ветки с ремоута
+   */
+  protected function syncRemote() {
+    foreach ($this->findGitFolders() as $f) {
+      chdir($f);
+      print `git fetch`;
+    }
+  }
+
+  protected function checkoutFromRemote($id) {
+    foreach ($this->findGitFolders() as $f) {
+      chdir($f);
+      $remoteBranches = `git branch -r`;
+      $remoteBranches = explode("\n", trim($remoteBranches));
+      $remoteBranches = array_map('trim', $remoteBranches);
+      foreach ($remoteBranches as $branch) {
+        if ($branch == "origin/i-$id") {
+          output2('checkout i-'.$id.' in '.basename($f));
+          print `git reset --hard origin/master`;
+          print `git checkout i-$id`;
+        }
+      }
+    }
+  }
+
+  function checkout($id) {
+    $this->syncRemote();
+    $this->checkoutFromRemote($id);
+  }
+
   protected function makeIssueBranch($id, $project) {
     output("Creating i-$id branch in '{$this->projectGitFolders[$project]}' folder, '$project' project");
     chdir($this->projectGitFolders[$project]);
