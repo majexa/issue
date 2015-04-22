@@ -108,16 +108,17 @@ class Issue extends GitBase {
   }
 
   protected function checkoutFromRemote($id) {
+    $b = $id == 'master' ? 'master' : "i-$id";
     foreach ($this->findGitFolders() as $f) {
       chdir($f);
       $remoteBranches = `git branch -r`;
       $remoteBranches = explode("\n", trim($remoteBranches));
       $remoteBranches = array_map('trim', $remoteBranches);
       foreach ($remoteBranches as $branch) {
-        if ($branch == "origin/i-$id") {
-          output2('checkout i-'.$id.' in '.basename($f));
+        if ($branch == $b) {
+          output2('checkout '.$b.' in '.basename($f));
           print `git reset --hard origin/master`;
-          print `git checkout i-$id`;
+          print `git checkout $b`;
         }
       }
     }
