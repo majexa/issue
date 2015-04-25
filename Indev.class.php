@@ -48,6 +48,7 @@ class Indev extends GitBase {
 
   function deploy() {
     $config =  require __DIR__.'/config.php';
+    output2($config['deploy']);
     print shell_exec($config['deploy']);
   }
 
