@@ -1,5 +1,5 @@
 <?php
 
 return [
-  'deploy' => 'ssh user@dev.majexa.ru ci update 1'
+  'deploy' => 'ssh user@may.majexa.ru ci update'
 ];
