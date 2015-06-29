@@ -1,1 +1,0 @@
-php ../run/run.php "new CliAccessArgsSingle('$*', new Indev)" issue/init.php
