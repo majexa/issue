@@ -198,14 +198,16 @@ class Issue extends GitBase {
 
   const returnFolder = 1, returnProject = 2;
 
-  protected function getIssueBranches($return = self::returnProject) {
+  function getIssueBranches($return = self::returnProject) {
     $r = [];
     foreach ($this->findGitFolders() as $f) {
       chdir($f);
       $branches = `git branch`;
       foreach (explode("\n", $branches) as $name) {
         $name = trim(Misc::removePrefix('* ', $name));
-        if (Misc::hasPrefix('i-', $name)) $r[Misc::removePrefix('i-', $name)][] = $return == self::returnProject ? basename($f) : $f;
+        if (Misc::hasPrefix('i-', $name)) {
+          $r[Misc::removePrefix('i-', $name)][] = ($return == self::returnProject ? basename($f) : $f);
+        }
       }
     }
     return $r;
