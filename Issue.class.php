@@ -100,9 +100,10 @@ class Issue extends GitBase {
   /**
    * Выкачивает ветки с ремоута
    */
-  protected function syncRemote() {
+  protected function fetch() {
     foreach ($this->findGitFolders() as $f) {
       chdir($f);
+      output2("fetch $f");
       print `git fetch`;
     }
   }
@@ -115,7 +116,7 @@ class Issue extends GitBase {
       $remoteBranches = explode("\n", trim($remoteBranches));
       $remoteBranches = array_map('trim', $remoteBranches);
       foreach ($remoteBranches as $branch) {
-        if ($branch == $b) {
+        if ($branch == 'origin/'.$b) {
           output2('checkout '.$b.' in '.basename($f));
           print `git reset --hard origin/master`;
           print `git checkout $b`;
@@ -125,7 +126,7 @@ class Issue extends GitBase {
   }
 
   function checkout($id) {
-    $this->syncRemote();
+    //$this->fetch();
     $this->checkoutFromRemote($id);
   }
 
@@ -198,7 +199,14 @@ class Issue extends GitBase {
 
   const returnFolder = 1, returnProject = 2;
 
-  function getIssueBranches($return = self::returnProject) {
+  /**
+   * Возвращает локальные ветки задач
+   *
+   * @param int $return
+   * @return array
+   * @throws Exception
+   */
+  protected function getIssueBranches($return = self::returnProject) {
     $r = [];
     foreach ($this->findGitFolders() as $f) {
       chdir($f);
@@ -236,7 +244,7 @@ class Issue extends GitBase {
   }
 
   /**
-   * Обновляет ветку с задачей из ремоута
+   * Аплоудит ветку на ремоут
    */
   function update($id) {
     $issueBranches = $this->getIssueBranches(self::returnFolder);
@@ -248,13 +256,13 @@ class Issue extends GitBase {
     foreach ($issueBranches[$id] as $f) {
       chdir($f);
       print `git add .`;
-      print `git commit`;
+      print `git commit -am "..."`;
       sys("git push $remote i-$id", true);
     }
   }
 
   /**
-   * Синхронизирует файл с данными об открытых ветках с реалиями
+   * Синхронизирует файл с данными о задачах в разработке с локальными ветками задач
    */
   function cleanupInDev() {
     foreach ($this->getIssueBranches() as $id => $projects) {
@@ -272,6 +280,6 @@ class Issue extends GitBase {
 
 }
 
-Issue::$inDevProjectsFile = __DIR__.'/.projectDependingBranches.php';
+Issue::$inDevProjectsFile = __DIR__.'/.inDevProjects.php';
 Issue::$remote = file_exists(__DIR__.'/.remote') ? trim(file_get_contents(__DIR__.'/.remote')) : 'origin';
 FileVar::touch(Issue::$inDevProjectsFile);
