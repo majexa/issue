@@ -22,7 +22,7 @@ class Issue extends GitBase {
    * Отображает все открытые задачи
    */
   function opened() {
-    $r = $this->getIssueBranches();
+    $r = (new IssueBranchFolders)->getLocal();
     if (!$r) {
       print "No opened issues\n";
       return;
@@ -61,7 +61,7 @@ class Issue extends GitBase {
     $depProjects = Misc::quoted2arr($depProjects);
     $projects = array_merge([$project], $depProjects);
     $notCleanProjects = $this->notCleanProjects($projects);
-    $issueBranches = $this->getIssueBranches();
+    $issueBranches = (new IssueBranchFolders)->getLocal();
     if (isset($issueBranches[$id])) throw new Exception("Issue $id already started in projects: ".implode(', ', $issueBranches[$id]));
     if ($notCleanProjects and !Cli::confirm("Would U like to checkout dirty project changes to new 'i-$id' branch?\nDirty projects: ".implode(', ', $notCleanProjects))) return;
     foreach ($projects as $p) {
@@ -137,7 +137,7 @@ class Issue extends GitBase {
   }
 
   protected function getDependingProjects($id) {
-    $issueBranches = $this->getIssueBranches();
+    $issueBranches = (new IssueBranchFolders)->getLocal();
     if (!isset($issueBranches[$id])) throw new Exception("No depending projects for issue $id");
     return Arr::drop($issueBranches[$id], self::getIssue($id)['project']);
   }
@@ -167,7 +167,7 @@ class Issue extends GitBase {
 
   protected function close($id, $method) {
     $issue = self::getIssue($id);
-    $issueBranches = $this->getIssueBranches(self::returnFolder);
+    $issueBranches = $this->getIssueBranches(IssueBranchFolders::returnFolder);
     if (!isset($issueBranches[$id])) {
       output("No issue branches by ID $id");
       return;
@@ -197,35 +197,13 @@ class Issue extends GitBase {
     }
   }
 
-  const returnFolder = 1, returnProject = 2;
 
-  /**
-   * Возвращает локальные ветки задач
-   *
-   * @param int $return
-   * @return array
-   * @throws Exception
-   */
-  protected function getIssueBranches($return = self::returnProject) {
-    $r = [];
-    foreach ($this->findGitFolders() as $f) {
-      chdir($f);
-      $branches = `git branch`;
-      foreach (explode("\n", $branches) as $name) {
-        $name = trim(Misc::removePrefix('* ', $name));
-        if (Misc::hasPrefix('i-', $name)) {
-          $r[Misc::removePrefix('i-', $name)][] = ($return == self::returnProject ? basename($f) : $f);
-        }
-      }
-    }
-    return $r;
-  }
 
   /**
    * Показывает статус задачи
    */
   function status($id) {
-    $issueBranches = $this->getIssueBranches(self::returnFolder);
+    $issueBranches = (new IssueBranchFolders)->getLocal(IssueBranchFolders::returnFolder);
     $remote = self::$remote;
     $clean = true;
     foreach ($issueBranches[$id] as $f) {
@@ -247,7 +225,7 @@ class Issue extends GitBase {
    * Аплоудит ветку на ремоут
    */
   function update($id) {
-    $issueBranches = $this->getIssueBranches(self::returnFolder);
+    $issueBranches = (new IssueBranchFolders)->getLocal();
     if (!isset($issueBranches[$id])) {
       output("No issue branches by ID $id");
       return;
@@ -265,7 +243,7 @@ class Issue extends GitBase {
    * Синхронизирует файл с данными о задачах в разработке с локальными ветками задач
    */
   function cleanupInDev() {
-    foreach ($this->getIssueBranches() as $id => $projects) {
+    foreach ((new IssueBranchFolders)->getLocal() as $id => $projects) {
       foreach ($projects as $project) {
         FileVar::updateSubVar(self::$inDevProjectsFile, $id, [
           'project'                       => $project,
