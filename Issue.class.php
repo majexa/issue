@@ -167,7 +167,7 @@ class Issue extends GitBase {
 
   protected function close($id, $method) {
     $issue = self::getIssue($id);
-    $issueBranches = $this->getIssueBranches(IssueBranchFolders::returnFolder);
+    $issueBranches = (new IssueBranchFolders)->getLocal();
     if (!isset($issueBranches[$id])) {
       output("No issue branches by ID $id");
       return;

@@ -56,6 +56,7 @@ class IssueBranchFolders extends GitBase {
       $branches = `git branch$suffix`;
       foreach (explode("\n", $branches) as $name) {
         $name = trim(Misc::removePrefix('* ', $name));
+        $name = trim(Misc::removePrefix('remotes/origin/', $name));
         if (Misc::hasPrefix('i-', $name)) {
           $r[Misc::removePrefix('i-', $name)][] = $f;
         }
