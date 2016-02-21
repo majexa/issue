@@ -73,7 +73,6 @@ class Issue extends GitBase {
       else {
         $issueFolder->create($id, $masterBranch);
       }
-      $issueFolder->shellexec("git push ".self::$remote." i-$id");
     }
     FileVar::updateSubVar(self::$inDevProjectsFile, $id, [
       'project'                       => $project,
@@ -126,7 +125,6 @@ class Issue extends GitBase {
   }
 
   function checkout($id) {
-    //$this->fetch();
     $this->checkoutFromRemote($id);
   }
 
@@ -197,8 +195,6 @@ class Issue extends GitBase {
     }
   }
 
-
-
   /**
    * Показывает статус задачи
    */
@@ -233,6 +229,7 @@ class Issue extends GitBase {
     $remote = self::$remote;
     foreach ($issueBranches[$id] as $f) {
       chdir($f);
+      print `git checkout i-$id`;
       print `git add .`;
       print `git commit -am "..."`;
       sys("git push $remote i-$id", true);
